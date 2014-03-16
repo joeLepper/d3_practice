@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>D3 - Data Driven Documents</title>
+  <script src="http://d3js.org/d3.v3.min.js" charset="utf-8"></script>
+  <script src="underscore-min.js"></script>
+  <style type="text/css">
+
+    body {
+      padding-top: 50px;
+      padding-left: 100px;
+    }
+
+    #chartArea {
+      width: 400px;
+      height: 300px;
+      background-color: #CCC;
+    }
+
+    .bar {
+      display: inline-block;
+      width: 20px;
+      height: 75px; /* Gets overriden by D3-assigned height below */
+      margin-right: 2px;
+      fill: teal;
+    }
+
+  </style>
+</head>
+<body>
+<div id="chartArea"></div>
+<script type="text/javascript">
+
+  var index;
+  var step = 50
+
+  var dataset = _.map(_.range(10), function (i) {
+    index = i;
+    return randomVal(index);
+  });
+
+  var w = 400, h = 300;
+  var svg;
+
+  init();
+
+  function init () {
+    svg = d3.select('#chartArea').append('svg')
+      .attr('width', w)
+      .attr('height', h);
+    setInterval(function () { update(); }, step);
+    draw();
+  }
+
+  function draw () {
+    var xScale = d3.scale.ordinal()
+      .domain(d3.range(dataset.length))
+      .rangeBands([0, w], 0.2, 0.5);
+
+    var yScale = d3.scale.linear()
+      .domain([0, d3.max(dataset, function (d) { return d.avg; }) * 1.1])
+      .range([0, h]);
+
+     var rect = svg.selectAll('rect')
+      .data(dataset, avg);
+
+    rect.transition()
+      .duration(step)
+      .attr('x', function (d, i) { return xScale(i); });
+
+    rect.enter()
+      .append('rect')
+      .attr('class', 'bar')
+      .attr('x', function (d, i) { return w; })
+      .attr('y', function (d, i) { return h - yScale(d.avg); })
+      .attr('width', xScale.rangeBand())
+      .attr('height', function (d) { return yScale(d.avg); })
+      .transition()
+        .duration(step)
+        .attr('x', function(d, i) { return xScale(i); });
+
+    rect.exit()
+      .transition()
+        .duration(step)
+        .attr('x', function(d, i) { return  xScale.rangeBand() * -1; })
+        .remove();
+  }
+
+  function avg (d, i) {
+   return d.avg
+  }
+
+  function randomVal (t) {
+    var val = {};
+    val.avg  = Math.random() * 500;
+    val.time = t
+    return val;
+  }
+
+  function update () {
+    index++
+    dataset.push(randomVal(index));
+    dataset.shift();
+    draw();
+  }
+
+</script>
+</body>
+</html>
